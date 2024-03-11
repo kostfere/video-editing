@@ -93,7 +93,7 @@ class VideoProcessorApp:
         self.process_button["state"] = "disabled"
         threading.Thread(target=self.process_videos).start()
 
-    def edit_frames(self, input_dir: str, output_dir: str) -> None:
+    def edit_frames(self, input_dir: str, output_dir: str, video_path: str) -> None:
         """
 
         Parameters:
@@ -110,7 +110,7 @@ class VideoProcessorApp:
 
             api_change_face(full_frame_path, self.picture_path)
 
-            self.status_label.config(text=f"Editing frame {i}/{total_frames}")
+            self.status_label.config(text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)}")
             self.root.update_idletasks()  # Ensure the UI updates are reflected immediately
 
     def process_videos(self):
@@ -127,11 +127,11 @@ class VideoProcessorApp:
         frames_dir = "frames"
         edited_frames_dir = "edited_frames"  # Directory for black and white frames
         video_name = os.path.splitext(os.path.basename(video_path))[0]
-        output_video_path = f"{video_name}_processed.mp4"
+        output_video_path = f"content/{video_name}_processed.mp4"
         self.clear_directory(frames_dir)
         self.clear_directory(edited_frames_dir)  # Ensure the directory is ready
         self.split_video_into_frames(video_path, frames_dir)
-        self.edit_frames(frames_dir, edited_frames_dir)
+        self.edit_frames(frames_dir, edited_frames_dir, video_path)
         self.create_video_from_frames(
             edited_frames_dir, output_video_path, video_path
         )  # Use the edited frames
