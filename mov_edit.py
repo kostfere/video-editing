@@ -51,6 +51,9 @@ class VideoProcessorApp:
         )
         self.progress.pack(pady=20)
 
+        self.status_label = Label(self.root, text="", font=("Arial", 10))
+        self.status_label.pack(pady=5)
+
     def select_videos(self):
         file_paths = filedialog.askopenfilenames(
             title="Select the original video files you wish to process"
@@ -83,10 +86,13 @@ class VideoProcessorApp:
         threading.Thread(target=self.process_videos).start()
 
     def process_videos(self):
-        for video_path in self.video_paths:
+        total_videos = len(self.video_paths)
+        for i, video_path in enumerate(self.video_paths, start=1):
+            self.status_label.config(text=f"Processing video {i}/{total_videos}")
             self.process_video(video_path)
         messagebox.showinfo("Success", "All videos processed successfully.")
         self.progress["value"] = 0
+        self.status_label.config(text="")
         self.process_button["state"] = "normal"
 
     def process_video(self, video_path):
@@ -111,6 +117,10 @@ class VideoProcessorApp:
             clip.save_frame(frame_path, t=i / clip.fps)
             self.progress["value"] = (i + 1) / total_frames * 100
             self.root.update_idletasks()  # Update the progress bar
+            # Update the status label with frame processing status
+            self.status_label.config(text=f"Processing frame {i+1}/{total_frames} of {os.path.basename(video_path)}")
+            self.root.update_idletasks()  # Ensure the UI updates are reflected immediately
+
 
     def create_video_from_frames(
         self, frames_dir: str, output_video_path: str, original_video_path: str
