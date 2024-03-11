@@ -110,7 +110,9 @@ class VideoProcessorApp:
 
             api_change_face(full_frame_path, self.picture_path)
 
-            self.status_label.config(text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)}")
+            self.status_label.config(
+                text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)}"
+            )
             self.root.update_idletasks()  # Ensure the UI updates are reflected immediately
 
     def process_videos(self):
@@ -172,7 +174,9 @@ class VideoProcessorApp:
 
         if hasattr(original_clip, "audio") and original_clip.audio is not None:
             original_audio = original_clip.audio
-            clip = clip.set_audio(original_audio.subclip(0, clip.duration))
+            clip = clip.set_audio(
+                original_audio.subclip(0, min(clip.duration, original_audio.duration))
+            )
 
         clip.write_videofile(output_video_path, codec="libx264", audio_codec="aac")
 
