@@ -4,7 +4,7 @@ from moviepy.editor import VideoFileClip
 import tkinter as tk
 
 
-class VideoTrimmerAppSingle:
+class VideoTrimmerApp:
     def __init__(self, parent):
         self.parent = parent
         self.video_path = ""  # Changed to a single video path
@@ -93,5 +93,5 @@ class VideoTrimmerAppSingle:
 
 if __name__ == "__main__":
     root = Tk()
-    app = VideoTrimmerAppSingle(root)
+    app = VideoTrimmerApp(root)
     root.mainloop()
