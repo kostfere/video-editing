@@ -1,53 +1,40 @@
 import os
 import shutil
-from tkinter import (
-    Tk,
-    filedialog,
-    messagebox,
-    Button,
-    Label,
-    Scrollbar,
-    Listbox,
-    VERTICAL,
-)
+from tkinter import filedialog, messagebox, Button, Label, Listbox
 from tkinter.ttk import Progressbar
-from moviepy.editor import VideoFileClip, ImageSequenceClip, AudioFileClip
+from moviepy.editor import VideoFileClip, ImageSequenceClip
 import threading
-from PIL import Image
-
-import requests
-import base64
-import os
-from typing import Dict, Any
-
 from a1111_api import api_change_face
+import time
 
 
 class VideoProcessorApp:
-    def __init__(self, root):
-        self.root = root
+    def __init__(self, parent):
+        self.parent = parent  # Use the parent frame from the tab
         self.video_paths = []
         self.picture_path = ""
         self.setup_ui()
 
     def setup_ui(self):
-        self.root.title("Video Frame Processor")
-        self.root.geometry("600x400")
 
-        Label(self.root, text="Video Frame Processor", font=("Arial", 16)).pack(pady=20)
+        Label(self.parent, text="Face Swap", font=("Arial", 16)).pack(pady=20)
 
-        Button(self.root, text="Select Videos", command=self.select_videos).pack(pady=5)
-        self.videos_listbox = Listbox(self.root, height=4, width=50, exportselection=0)
-        self.videos_listbox.pack(pady=5)
-
-        Button(self.root, text="Select Picture", command=self.select_picture).pack(
+        Button(self.parent, text="Select Videos", command=self.select_videos).pack(
             pady=5
         )
-        self.picture_label = Label(self.root, text="", font=("Arial", 10))
+        self.videos_listbox = Listbox(
+            self.parent, height=4, width=50, exportselection=0
+        )
+        self.videos_listbox.pack(pady=5)
+
+        Button(self.parent, text="Select Picture", command=self.select_picture).pack(
+            pady=5
+        )
+        self.picture_label = Label(self.parent, text="", font=("Arial", 10))
         self.picture_label.pack(pady=5)
 
         self.process_button = Button(
-            self.root,
+            self.parent,
             text="Start Processing",
             command=self.start_processing,
             state="disabled",
@@ -55,11 +42,11 @@ class VideoProcessorApp:
         self.process_button.pack(pady=5)
 
         self.progress = Progressbar(
-            self.root, orient="horizontal", length=200, mode="determinate"
+            self.parent, orient="horizontal", length=200, mode="determinate"
         )
         self.progress.pack(pady=20)
 
-        self.status_label = Label(self.root, text="", font=("Arial", 10))
+        self.status_label = Label(self.parent, text="", font=("Arial", 10))
         self.status_label.pack(pady=5)
 
     def select_videos(self):
@@ -126,17 +113,47 @@ class VideoProcessorApp:
         self.process_button["state"] = "normal"
 
     def process_video(self, video_path):
+        start_time_overall = time.time()  # Start time for the entire process
+
         frames_dir = "frames"
-        edited_frames_dir = "edited_frames"  # Directory for black and white frames
+        edited_frames_dir = "edited_frames"
         video_name = os.path.splitext(os.path.basename(video_path))[0]
         output_video_path = f"content/{video_name}_processed.mp4"
+
+        # Clear directories
+        start_time = time.time()
         self.clear_directory(frames_dir)
-        self.clear_directory(edited_frames_dir)  # Ensure the directory is ready
+        self.clear_directory(edited_frames_dir)
+        self.display_time("Clear directories", start_time)
+
+        # Split video into frames
+        start_time = time.time()
         self.split_video_into_frames(video_path, frames_dir)
+        self.display_time("Split video into frames", start_time)
+
+        # Edit frames
+        start_time = time.time()
         self.edit_frames(frames_dir, edited_frames_dir, video_path)
-        self.create_video_from_frames(
-            edited_frames_dir, output_video_path, video_path
-        )  # Use the edited frames
+        self.display_time("Edit frames", start_time)
+
+        # Create video from frames
+        start_time = time.time()
+        self.create_video_from_frames(edited_frames_dir, output_video_path, video_path)
+        self.display_time("Create video from frames", start_time)
+
+        self.display_time("Total processing time", start_time_overall)
+        messagebox.showinfo("Success", "Video processed successfully.")
+
+    def display_time(self, task_name, start_time):
+        elapsed_time = time.time() - start_time
+        message = f"{task_name} took {elapsed_time:.2f} seconds"
+        print(
+            message
+        )  # Print to console; you can also update this to display in the UI
+
+        # Example to update the status label in the UI with the last task's time
+        self.status_label.config(text=message)
+        self.parent.update_idletasks()  # Make sure the UI updates
 
     def clear_directory(self, directory: str) -> None:
         if os.path.exists(directory):
@@ -174,11 +191,21 @@ class VideoProcessorApp:
 
         if hasattr(original_clip, "audio") and original_clip.audio is not None:
             original_audio = original_clip.audio
-            clip = clip.set_audio(
+            clip.set_audio(
                 original_audio.subclip(0, min(clip.duration, original_audio.duration))
             )
 
-        clip.write_videofile(output_video_path, codec="libx264", audio_codec="aac")
+        def create_video_progress_tracker(t):
+            progress_percent = (t / clip.duration) * 100
+            self.progress["value"] = progress_percent
+            self.parent.update_idletasks()
+
+        clip.write_videofile(
+            output_video_path,
+            codec="libx264",
+            audio_codec="aac",
+            progress_bar=create_video_progress_tracker,
+        )
 
 
 if __name__ == "__main__":
