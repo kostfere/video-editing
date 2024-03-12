@@ -131,7 +131,12 @@ class VideoProcessorApp:
         frames_dir = "frames"
         edited_frames_dir = "edited_frames"
         video_name = os.path.splitext(os.path.basename(video_path))[0]
-        output_video_path = f"content/{video_name}_processed.mp4"
+
+        # Extract the picture name without its file extension
+        picture_name = os.path.splitext(os.path.basename(self.picture_path))[0]
+        
+        # Updated output video path to include the picture name for face swapping
+        output_video_path = f"content/{video_name}_{picture_name}.mp4"
 
         # Clear directories
         start_time = time.time()
