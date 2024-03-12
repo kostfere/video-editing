@@ -1,6 +1,7 @@
 import os
 import shutil
 from tkinter import filedialog, messagebox, Button, Label, Listbox
+
 # from tkinter.ttk import Progressbar
 from moviepy.editor import VideoFileClip, ImageSequenceClip
 import threading
@@ -212,7 +213,9 @@ class VideoProcessorApp:
             clip = clip.set_audio(
                 original_audio.subclip(0, min(clip.duration, original_audio.duration))
             )
-
+        output_dir = os.path.dirname(output_video_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         clip.write_videofile(output_video_path, codec="libx264", audio_codec="aac")
 
 
