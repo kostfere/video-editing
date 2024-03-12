@@ -59,16 +59,38 @@ class PhotoProcessorApp:
         self.process_button["state"] = "disabled"
         threading.Thread(target=self.process_photos).start()
 
+
     def process_photos(self):
+        # Ensure the content directory exists
+        content_dir = "content"
+        if not os.path.exists(content_dir):
+            os.makedirs(content_dir)
+
+        edited_frames_dir = "edited_frames"
+        if not os.path.exists(edited_frames_dir):
+            os.makedirs(edited_frames_dir)
+
         for photo_path in self.photo_paths:
             self.log_listbox.insert(tk.END, f"Processing {os.path.basename(photo_path)}...")
             self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
             
-            output_path = os.path.splitext(photo_path)[0] + "_processed.jpg"
-            api_change_face(photo_path, self.picture_path, output_path)  # Assuming the API supports an output path
-            
+            # Call the API to process and save the photo in edited_frames directory
+            api_change_face(photo_path, self.picture_path)
+
+            # Generate the new file name with _processed suffix
+            new_file_name = os.path.splitext(os.path.basename(photo_path))[0] + "_processed.jpg"
+            processed_file_path = os.path.join(edited_frames_dir, os.path.basename(photo_path))  # The path in edited_frames
+            content_file_path = os.path.join(content_dir, new_file_name)  # The new path in content directory
+
+            # Move the processed file to the content directory with the new name
+            shutil.move(processed_file_path, content_file_path)
+
             self.log_listbox.insert(tk.END, f"Finished processing {os.path.basename(photo_path)}")
             self.log_listbox.yview(tk.END)
+
+        # Delete the edited_frames directory after processing is complete
+        if os.path.exists(edited_frames_dir):
+            shutil.rmtree(edited_frames_dir)
 
         messagebox.showinfo("Success", "All photos processed successfully.")
         self.process_button["state"] = "normal"
