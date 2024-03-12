@@ -1,6 +1,6 @@
 from video_face_swap import VideoProcessorApp
 from photo_face_swap import PhotoProcessorApp
-from undersampler import UnderSamplerApp
+from video_undersampler import UnderSamplerApp
 import tkinter as tk
 from tkinter import (
     ttk,
@@ -30,7 +30,7 @@ class CombinedApp:
 
         # Tab for UnderSamplerApp
         tab3_frame = ttk.Frame(tab_control)
-        tab_control.add(tab3_frame, text="Undersampler")
+        tab_control.add(tab3_frame, text="Video Undersampler")
         self.undersampler_app = UnderSamplerApp(tab3_frame)
         # self.undersampler_app.setup_ui()
 
