@@ -1,6 +1,7 @@
 from video_face_swap import VideoProcessorApp
 from photo_face_swap import PhotoProcessorApp
 from video_undersampler import UnderSamplerApp
+
 # from video_trimmer import VideoTrimmerApp
 import tkinter as tk
 from tkinter import (

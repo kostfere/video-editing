@@ -18,7 +18,9 @@ class VideoProcessorApp:
 
     def setup_ui(self):
 
-        Label(self.parent, text="Face Swap For Videos", font=("Arial", 16)).pack(pady=20)
+        Label(self.parent, text="Face Swap For Videos", font=("Arial", 16)).pack(
+            pady=20
+        )
 
         Button(self.parent, text="Select Videos", command=self.select_videos).pack(
             pady=5
@@ -134,7 +136,7 @@ class VideoProcessorApp:
 
         # Extract the picture name without its file extension
         picture_name = os.path.splitext(os.path.basename(self.picture_path))[0]
-        
+
         # Updated output video path to include the picture name for face swapping
         output_video_path = f"content/{video_name}_{picture_name}.mp4"
 
@@ -179,7 +181,7 @@ class VideoProcessorApp:
 
     def split_video_into_frames(self, video_path: str, output_dir: str) -> None:
         clip = VideoFileClip(video_path)
-        total_frames = int(clip.fps * clip.duration)+1
+        total_frames = int(clip.fps * clip.duration) + 1
         for i, frame in enumerate(clip.iter_frames()):
             frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
             clip.img = frame
