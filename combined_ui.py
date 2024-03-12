@@ -1,4 +1,5 @@
 from face_swap import VideoProcessorApp
+from photo_face_swap import PhotoProcessorApp
 from undersampler import UnderSamplerApp
 import tkinter as tk
 from tkinter import (
@@ -22,10 +23,15 @@ class CombinedApp:
         tab_control.add(tab1_frame, text="Face Swap")
         self.face_swap_app = VideoProcessorApp(tab1_frame)
 
-        # Tab for UnderSamplerApp
+        # Tab for PhotoProcessorApp
         tab2_frame = ttk.Frame(tab_control)
-        tab_control.add(tab2_frame, text="Undersampler")
-        self.undersampler_app = UnderSamplerApp(tab2_frame)
+        tab_control.add(tab2_frame, text="Face Swap for Photos")
+        self.photo_face_swap_app = PhotoProcessorApp(tab2_frame)
+
+        # Tab for UnderSamplerApp
+        tab3_frame = ttk.Frame(tab_control)
+        tab_control.add(tab3_frame, text="Undersampler")
+        self.undersampler_app = UnderSamplerApp(tab3_frame)
         # self.undersampler_app.setup_ui()
 
         tab_control.pack(expand=1, fill="both")
