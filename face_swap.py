@@ -100,7 +100,7 @@ class VideoProcessorApp:
             self.status_label.config(
                 text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)}"
             )
-            self.root.update_idletasks()  # Ensure the UI updates are reflected immediately
+            self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
 
     def process_videos(self):
         total_videos = len(self.video_paths)
@@ -168,12 +168,13 @@ class VideoProcessorApp:
             clip.img = frame
             clip.save_frame(frame_path, t=i / clip.fps)
             self.progress["value"] = (i + 1) / total_frames * 100
-            self.root.update_idletasks()  # Update the progress bar
+            self.parent.update_idletasks()  # Update the progress bar
             # Update the status label with frame processing status
             self.status_label.config(
                 text=f"Splitting frame {i+1}/{total_frames} of {os.path.basename(video_path)}"
             )
-            self.root.update_idletasks()  # Ensure the UI updates are reflected immediately
+            self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
+
 
     def create_video_from_frames(
         self, frames_dir: str, output_video_path: str, original_video_path: str
