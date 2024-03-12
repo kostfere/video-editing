@@ -1,7 +1,7 @@
 import os
 import shutil
 from tkinter import filedialog, messagebox, Button, Label, Listbox
-from tkinter.ttk import Progressbar
+# from tkinter.ttk import Progressbar
 from moviepy.editor import VideoFileClip, ImageSequenceClip
 import threading
 from a1111_api import api_change_face
@@ -42,17 +42,17 @@ class VideoProcessorApp:
         )
         self.process_button.pack(pady=5)
 
-        self.progress = Progressbar(
-            self.parent, orient="horizontal", length=200, mode="determinate"
-        )
-        self.progress.pack(pady=20)
+        # self.progress = Progressbar(
+        #     self.parent, orient="horizontal", length=200, mode="determinate"
+        # )
+        # self.progress.pack(pady=20)
 
         self.status_label = Label(self.parent, text="", font=("Arial", 10))
         self.status_label.pack(pady=5)
 
         # Add a Listbox to display processing times
         Label(self.parent, text="Process Log", font=("Arial", 12)).pack(pady=5)
-        self.log_listbox = Listbox(self.parent, height=10, width=60)
+        self.log_listbox = Listbox(self.parent, height=10, width=120)
         self.log_listbox.pack(pady=5)
 
     def select_videos(self):
@@ -118,9 +118,18 @@ class VideoProcessorApp:
             self.status_label.config(text=f"Processing video {i}/{total_videos}")
             self.process_video(video_path)
         messagebox.showinfo("Success", "All videos processed successfully.")
-        self.progress["value"] = 0
+        # self.progress["value"] = 0
         self.status_label.config(text="")
         self.process_button["state"] = "normal"
+
+        # After processing, automatically delete the frames and edited_frames directories
+        self.delete_directory("frames")
+        self.delete_directory("edited_frames")
+
+    def delete_directory(self, directory: str) -> None:
+        """Delete the specified directory."""
+        if os.path.exists(directory):
+            shutil.rmtree(directory)
 
     def process_video(self, video_path):
         start_time_overall = time.time()  # Start time for the entire process
@@ -134,33 +143,35 @@ class VideoProcessorApp:
         start_time = time.time()
         self.clear_directory(frames_dir)
         self.clear_directory(edited_frames_dir)
-        self.display_time("Clear directories", start_time)
+        self.display_time("Clear directories", start_time, video_name)
 
         # Split video into frames
         start_time = time.time()
         self.split_video_into_frames(video_path, frames_dir)
-        self.display_time("Split video into frames", start_time)
+        self.display_time("Split video into frames", start_time, video_name)
 
         # Edit frames
         start_time = time.time()
         self.edit_frames(frames_dir, edited_frames_dir, video_path)
-        self.display_time("Edit frames", start_time)
+        self.display_time("Edit frames", start_time, video_name)
 
         # Create video from frames
         start_time = time.time()
         self.create_video_from_frames(edited_frames_dir, output_video_path, video_path)
-        self.display_time("Create video from frames", start_time)
+        self.display_time("Create video from frames", start_time, video_name)
 
-        self.display_time("Total processing time", start_time_overall)
+        self.display_time("Total processing time", start_time_overall, video_path)
+        self.log_listbox.insert(tk.END, "-" * 60)
 
-    def display_time(self, task_name, start_time):
+    def display_time(self, task_name: str, start_time: float, video_name: str) -> None:
         elapsed_time = time.time() - start_time
-        message = f"{task_name} took {elapsed_time:.2f} seconds"
+        message = f"[{video_name}] {task_name} took {elapsed_time:.2f} seconds"
         print(message)  # Continue to print to the console if desired
 
         # Log the message in the UI Listbox
         self.log_listbox.insert(tk.END, message)
-        self.log_listbox.yview(tk.END)  #
+        # self.log_listbox.insert(tk.END, "-" * 60)
+        self.log_listbox.yview(tk.END)
 
     def clear_directory(self, directory: str) -> None:
         if os.path.exists(directory):
@@ -174,8 +185,8 @@ class VideoProcessorApp:
             frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
             clip.img = frame
             clip.save_frame(frame_path, t=i / clip.fps)
-            self.progress["value"] = (i + 1) / total_frames * 100
-            self.parent.update_idletasks()  # Update the progress bar
+            # self.progress["value"] = (i + 1) / total_frames * 100
+            # self.parent.update_idletasks()  # Update the progress bar
             # Update the status label with frame processing status
             self.status_label.config(
                 text=f"Splitting frame {i+1}/{total_frames} of {os.path.basename(video_path)}"

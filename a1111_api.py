@@ -44,8 +44,6 @@ def api_change_face(
         "model": "inswapper_128.onnx",
         "gender_source": 0,
         "gender_target": 0,
-        "save_to_file": 1,
-        # "result_file_path": result_path,
         "device": device_choice,
     }
     url = "http://127.0.0.1:7860"
