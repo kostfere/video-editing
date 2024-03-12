@@ -77,6 +77,7 @@ class PhotoProcessorApp:
 
     def start_processing(self):
         self.process_button["state"] = "disabled"
+        self.clear_process_log()
         threading.Thread(target=self.process_photos).start()
 
     def process_photos(self):

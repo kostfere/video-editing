@@ -20,7 +20,7 @@ class CombinedApp:
 
         # Tab for VideoProcessorApp
         tab1_frame = ttk.Frame(tab_control)
-        tab_control.add(tab1_frame, text="Face Swap")
+        tab_control.add(tab1_frame, text="Face Swap for Videos")
         self.face_swap_app = VideoProcessorApp(tab1_frame)
 
         # Tab for PhotoProcessorApp

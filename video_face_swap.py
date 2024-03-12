@@ -19,7 +19,7 @@ class VideoProcessorApp:
 
     def setup_ui(self):
 
-        Label(self.parent, text="Face Swap", font=("Arial", 16)).pack(pady=20)
+        Label(self.parent, text="Face Swap For Videos", font=("Arial", 16)).pack(pady=20)
 
         Button(self.parent, text="Select Videos", command=self.select_videos).pack(
             pady=5
