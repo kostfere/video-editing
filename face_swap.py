@@ -8,6 +8,7 @@ from a1111_api import api_change_face
 import time
 import tkinter as tk
 
+
 class VideoProcessorApp:
     def __init__(self, parent):
         self.parent = parent  # Use the parent frame from the tab
@@ -83,7 +84,11 @@ class VideoProcessorApp:
 
     def start_processing(self):
         self.process_button["state"] = "disabled"
+        self.clear_process_log()  # Clear the process log before starting
         threading.Thread(target=self.process_videos).start()
+
+    def clear_process_log(self):
+        self.log_listbox.delete(0, tk.END)  # Clear all entries in the log listbox
 
     def edit_frames(self, input_dir: str, output_dir: str, video_path: str) -> None:
         """
@@ -147,13 +152,12 @@ class VideoProcessorApp:
         self.display_time("Create video from frames", start_time)
 
         self.display_time("Total processing time", start_time_overall)
-        messagebox.showinfo("Success", "Video processed successfully.")
 
     def display_time(self, task_name, start_time):
         elapsed_time = time.time() - start_time
         message = f"{task_name} took {elapsed_time:.2f} seconds"
         print(message)  # Continue to print to the console if desired
-        
+
         # Log the message in the UI Listbox
         self.log_listbox.insert(tk.END, message)
         self.log_listbox.yview(tk.END)  #
@@ -178,7 +182,6 @@ class VideoProcessorApp:
             )
             self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
 
-
     def create_video_from_frames(
         self, frames_dir: str, output_video_path: str, original_video_path: str
     ) -> None:
@@ -195,16 +198,11 @@ class VideoProcessorApp:
 
         if hasattr(original_clip, "audio") and original_clip.audio is not None:
             original_audio = original_clip.audio
-            clip.set_audio(
+            clip = clip.set_audio(
                 original_audio.subclip(0, min(clip.duration, original_audio.duration))
             )
 
-        clip.write_videofile(
-            output_video_path,
-            codec="libx264",
-            audio_codec="aac",
-            # progress_bar=create_video_progress_tracker,
-        )
+        clip.write_videofile(output_video_path, codec="libx264", audio_codec="aac")
 
 
 if __name__ == "__main__":
