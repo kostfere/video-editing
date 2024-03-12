@@ -2,7 +2,6 @@ import os
 import shutil
 from tkinter import filedialog, messagebox, Button, Label, Listbox
 
-# from tkinter.ttk import Progressbar
 from moviepy.editor import VideoFileClip, ImageSequenceClip
 import threading
 from a1111_api import api_change_face
@@ -43,11 +42,6 @@ class VideoProcessorApp:
         )
         self.process_button.pack(pady=5)
 
-        # self.progress = Progressbar(
-        #     self.parent, orient="horizontal", length=200, mode="determinate"
-        # )
-        # self.progress.pack(pady=20)
-
         self.status_label = Label(self.parent, text="", font=("Arial", 10))
         self.status_label.pack(pady=5)
 
@@ -66,7 +60,7 @@ class VideoProcessorApp:
 
     def select_picture(self):
         self.picture_path = filedialog.askopenfilename(
-            title="Now, please select a picture for future processing steps"
+            title="Now, please select a picture for face swapping"
         )
         if self.picture_path:
             self.picture_label.config(text=os.path.basename(self.picture_path))
@@ -119,7 +113,6 @@ class VideoProcessorApp:
             self.status_label.config(text=f"Processing video {i}/{total_videos}")
             self.process_video(video_path)
         messagebox.showinfo("Success", "All videos processed successfully.")
-        # self.progress["value"] = 0
         self.status_label.config(text="")
         self.process_button["state"] = "normal"
 
@@ -181,13 +174,12 @@ class VideoProcessorApp:
 
     def split_video_into_frames(self, video_path: str, output_dir: str) -> None:
         clip = VideoFileClip(video_path)
-        total_frames = int(clip.fps * clip.duration)
+        total_frames = int(clip.fps * clip.duration)+1
         for i, frame in enumerate(clip.iter_frames()):
             frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
             clip.img = frame
             clip.save_frame(frame_path, t=i / clip.fps)
-            # self.progress["value"] = (i + 1) / total_frames * 100
-            # self.parent.update_idletasks()  # Update the progress bar
+
             # Update the status label with frame processing status
             self.status_label.config(
                 text=f"Splitting frame {i+1}/{total_frames} of {os.path.basename(video_path)}"
