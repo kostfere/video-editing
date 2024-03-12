@@ -1,4 +1,4 @@
-from face_swap import VideoProcessorApp
+from video_face_swap import VideoProcessorApp
 from photo_face_swap import PhotoProcessorApp
 from undersampler import UnderSamplerApp
 import tkinter as tk
