@@ -7,6 +7,7 @@ from typing import Dict, Any
 def api_change_face(
     input_image: str,
     face_image: str,
+    face_restorer: str = "None",
     processing_unit: str = "GPU (CUDA)",
     edited_frames="edited_frames/",
 ) -> Dict[str, Any]:
@@ -37,7 +38,7 @@ def api_change_face(
         "upscaler": "None",
         "scale": 1,
         "upscale_visibility": 1,
-        "face_restorer": "None",
+        "face_restorer": face_restorer,  # "None", GFPGAN, CodeFormer
         "restorer_visibility": 1,
         "codeformer_weight": 0.5,
         "restore_first": 1,

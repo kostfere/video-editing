@@ -1,7 +1,6 @@
 import os
 import shutil
-from tkinter import filedialog, messagebox, Button, Label, Listbox
-
+from tkinter import filedialog, messagebox, Button, Label, Listbox, ttk
 from moviepy.editor import VideoFileClip, ImageSequenceClip
 import threading
 from a1111_api import api_change_face
@@ -12,6 +11,7 @@ import tkinter as tk
 class VideoProcessorApp:
     def __init__(self, parent):
         self.parent = parent  # Use the parent frame from the tab
+        self.face_restorer = tk.StringVar(value="None")
         self.video_paths = []
         self.picture_path = ""
         self.setup_ui()
@@ -35,6 +35,18 @@ class VideoProcessorApp:
         )
         self.picture_label = Label(self.parent, text="", font=("Arial", 10))
         self.picture_label.pack(pady=5)
+
+        Label(self.parent, text="Select Face Restorer:", font=("Arial", 10)).pack(
+            pady=5
+        )
+        face_restorer_options = ["None", "GFPGAN", "CodeFormer"]
+        face_restorer_dropdown = ttk.Combobox(
+            self.parent,
+            textvariable=self.face_restorer,
+            values=face_restorer_options,
+            state="readonly",
+        )
+        face_restorer_dropdown.pack(pady=5)
 
         self.process_button = Button(
             self.parent,
@@ -102,7 +114,11 @@ class VideoProcessorApp:
         for i, frame_file in enumerate(frames, start=1):
             full_frame_path = os.path.join(input_dir, frame_file)
 
-            api_change_face(full_frame_path, self.picture_path)
+            api_change_face(
+                full_frame_path,
+                self.picture_path,
+                face_restorer=self.face_restorer.get(),
+            )
 
             self.status_label.config(
                 text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)}"
