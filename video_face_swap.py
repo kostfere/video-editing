@@ -154,7 +154,7 @@ class VideoProcessorApp:
         picture_name = os.path.splitext(os.path.basename(self.picture_path))[0]
 
         # Updated output video path to include the picture name for face swapping
-        output_video_path = f"content/{video_name}_{picture_name}.mp4"
+        output_video_path = f"content/{video_name}_{picture_name}_{self.face_restorer}.mp4"
 
         # Clear directories
         start_time = time.time()
