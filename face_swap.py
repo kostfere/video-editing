@@ -6,7 +6,7 @@ from moviepy.editor import VideoFileClip, ImageSequenceClip
 import threading
 from a1111_api import api_change_face
 import time
-
+import tkinter as tk
 
 class VideoProcessorApp:
     def __init__(self, parent):
@@ -48,6 +48,11 @@ class VideoProcessorApp:
 
         self.status_label = Label(self.parent, text="", font=("Arial", 10))
         self.status_label.pack(pady=5)
+
+        # Add a Listbox to display processing times
+        Label(self.parent, text="Process Log", font=("Arial", 12)).pack(pady=5)
+        self.log_listbox = Listbox(self.parent, height=10, width=60)
+        self.log_listbox.pack(pady=5)
 
     def select_videos(self):
         file_paths = filedialog.askopenfilenames(
@@ -147,13 +152,11 @@ class VideoProcessorApp:
     def display_time(self, task_name, start_time):
         elapsed_time = time.time() - start_time
         message = f"{task_name} took {elapsed_time:.2f} seconds"
-        print(
-            message
-        )  # Print to console; you can also update this to display in the UI
-
-        # Example to update the status label in the UI with the last task's time
-        self.status_label.config(text=message)
-        self.parent.update_idletasks()  # Make sure the UI updates
+        print(message)  # Continue to print to the console if desired
+        
+        # Log the message in the UI Listbox
+        self.log_listbox.insert(tk.END, message)
+        self.log_listbox.yview(tk.END)  #
 
     def clear_directory(self, directory: str) -> None:
         if os.path.exists(directory):
@@ -196,16 +199,11 @@ class VideoProcessorApp:
                 original_audio.subclip(0, min(clip.duration, original_audio.duration))
             )
 
-        def create_video_progress_tracker(t):
-            progress_percent = (t / clip.duration) * 100
-            self.progress["value"] = progress_percent
-            self.parent.update_idletasks()
-
         clip.write_videofile(
             output_video_path,
             codec="libx264",
             audio_codec="aac",
-            progress_bar=create_video_progress_tracker,
+            # progress_bar=create_video_progress_tracker,
         )
 
 
