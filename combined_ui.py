@@ -25,10 +25,10 @@ class CombinedApp:
         tab_control.add(tab1_frame, text="Face Swap for Videos")
         self.face_swap_app = VideoProcessorApp(tab1_frame)
 
-        # Tab for PhotoProcessorApp
-        tab2_frame = ttk.Frame(tab_control)
-        tab_control.add(tab2_frame, text="Face Swap for Photos")
-        self.photo_face_swap_app = PhotoProcessorApp(tab2_frame)
+        # # Tab for PhotoProcessorApp
+        # tab2_frame = ttk.Frame(tab_control)
+        # tab_control.add(tab2_frame, text="Face Swap for Photos")
+        # self.photo_face_swap_app = PhotoProcessorApp(tab2_frame)
 
         # Tab for UnderSamplerApp
         tab3_frame = ttk.Frame(tab_control)

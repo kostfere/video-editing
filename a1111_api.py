@@ -8,6 +8,7 @@ def api_change_face(
     input_image: str,
     face_image: str,
     face_restorer: str = "None",
+    mask_face: int = 0,
     processing_unit: str = "GPU (CUDA)",
     edited_frames="edited_frames/",
 ) -> Dict[str, Any]:
@@ -46,6 +47,7 @@ def api_change_face(
         "gender_source": 0,
         "gender_target": 0,
         "device": device_choice,
+        "mask_face": mask_face,
     }
     url = "http://127.0.0.1:7860"
     response = requests.post(url=f"{url}/reactor/image", json=payload)

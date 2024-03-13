@@ -12,6 +12,7 @@ class VideoProcessorApp:
     def __init__(self, parent):
         self.parent = parent  # Use the parent frame from the tab
         self.face_restorer = tk.StringVar(value="None")
+        self.mask_face = tk.IntVar(value=0)
         self.video_paths = []
         self.picture_path = ""
         self.setup_ui()
@@ -47,6 +48,14 @@ class VideoProcessorApp:
             state="readonly",
         )
         face_restorer_dropdown.pack(pady=5)
+
+        tk.Checkbutton(
+            self.parent,
+            text="Apply Face Mask Correction",
+            variable=self.mask_face,
+            onvalue=1,
+            offvalue=0,
+        ).pack(pady=5)
 
         self.process_button = Button(
             self.parent,
@@ -118,6 +127,7 @@ class VideoProcessorApp:
                 full_frame_path,
                 self.picture_path,
                 face_restorer=self.face_restorer.get(),
+                mask_face=self.mask_face.get(),
             )
 
             self.status_label.config(
@@ -154,7 +164,7 @@ class VideoProcessorApp:
         picture_name = os.path.splitext(os.path.basename(self.picture_path))[0]
 
         # Updated output video path to include the picture name for face swapping
-        output_video_path = f"content/{video_name}_{picture_name}_{self.face_restorer.get()}.mp4"
+        output_video_path = f"content/{video_name}_{picture_name}_{self.face_restorer.get()}_face_mask{self.face_restorer.get()}.mp4"
 
         # Clear directories
         start_time = time.time()
