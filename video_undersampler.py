@@ -80,11 +80,12 @@ class UnderSamplerApp:
 
         self.start_processing(self.selected_videos, target_fps)
 
-
     def start_processing(self, videos, target_fps):
         total_videos = len(videos)
         self.progress_bar["maximum"] = 100
-        self.convert_button["state"] = "disabled"  # Disable the convert button to prevent multiple clicks
+        self.convert_button["state"] = (
+            "disabled"  # Disable the convert button to prevent multiple clicks
+        )
         thread = Thread(
             target=self.process_videos,
             args=(
@@ -96,7 +97,6 @@ class UnderSamplerApp:
         )
         thread.start()
         self.progress_bar.after(100, lambda: self.check_thread(thread))
-
 
     def process_videos(self, videos, target_fps, progress_callback):
         for i, video_path in enumerate(videos):
@@ -130,12 +130,14 @@ class UnderSamplerApp:
             self.on_processing_complete()
             self.progress_bar["value"] = 0
 
-
     def on_processing_complete(self):
         self.convert_button["state"] = "normal"  # Re-enable the convert button
         messagebox.showinfo("Processing Complete", "All videos have been processed.")
         self.progress_bar["value"] = 0  # Reset the progress bar
-        self.current_video_label.configure(text="")  # Clear the current video name label
+        self.current_video_label.configure(
+            text=""
+        )  # Clear the current video name label
+
 
 if __name__ == "__main__":
     root = tk.Tk()
