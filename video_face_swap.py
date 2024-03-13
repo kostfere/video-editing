@@ -213,7 +213,7 @@ class VideoProcessorApp:
 
     def split_video_into_frames(self, video_path: str, output_dir: str) -> None:
         clip = VideoFileClip(video_path)
-        total_frames = int(clip.fps * clip.duration) + 1
+        total_frames = int(clip.fps * clip.duration) # Estimate the total number of frames
         for i, frame in enumerate(clip.iter_frames()):
             frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
             clip.img = frame
@@ -221,7 +221,7 @@ class VideoProcessorApp:
 
             # Update the status label with frame processing status
             self.status_label.config(
-                text=f"Splitting frame {i+1}/{total_frames} of {os.path.basename(video_path)}"
+                text=f"Splitting frame {i+1} of {os.path.basename(video_path)}. (estimated number of frames: {total_frames})"
             )
             self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
 
