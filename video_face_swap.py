@@ -1,6 +1,6 @@
 import os
 import shutil
-from tkinter import filedialog, messagebox, Button, Label, Listbox, ttk
+from tkinter import filedialog, messagebox, Button, Label, Listbox, ttk, Scale, Label
 from moviepy.editor import VideoFileClip, ImageSequenceClip
 import threading
 from a1111_api import api_change_face
@@ -47,6 +47,19 @@ class VideoProcessorApp:
             state="readonly",
         )
         face_restorer_dropdown.pack(pady=5)
+
+        # CodeFormer weight selection
+        Label(self.parent, text="CodeFormer Weight:", font=("Arial", 10)).pack(pady=5)
+        self.codeformer_weight_scale = Scale(
+            self.parent,
+            from_=0,
+            to=1,
+            resolution=0.01,
+            orient="horizontal",
+            label="0 = Max Effect, 1 = Min Effect",
+        )
+        self.codeformer_weight_scale.set(0.5)  # Default value
+        self.codeformer_weight_scale.pack(pady=5)
 
         self.process_button = Button(
             self.parent,
@@ -128,6 +141,7 @@ class VideoProcessorApp:
                 full_frame_path,
                 picture_path,
                 face_restorer=self.face_restorer.get(),
+                self.codeformer_weight_scale.get(),
             )
 
             self.status_label.config(
