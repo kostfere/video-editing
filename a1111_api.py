@@ -41,13 +41,13 @@ def api_change_face(
         "upscale_visibility": 1,
         "face_restorer": face_restorer,  # "None", GFPGAN, CodeFormer
         "restorer_visibility": 1,
-        "codeformer_weight": 0.5,
+        "codeformer_weight": 0.3,
         "restore_first": 1,
         "model": "inswapper_128.onnx",
         "gender_source": 0,
         "gender_target": 0,
         "device": device_choice,
-        "mask_face": mask_face,
+        "mask_face": 1,
     }
     url = "http://127.0.0.1:7860"
     response = requests.post(url=f"{url}/reactor/image", json=payload)
