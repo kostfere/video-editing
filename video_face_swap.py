@@ -12,7 +12,6 @@ class VideoProcessorApp:
     def __init__(self, parent):
         self.parent = parent  # Use the parent frame from the tab
         self.face_restorer = tk.StringVar(value="None")
-        self.mask_face = tk.IntVar(value=0)
         self.video_paths = []
         self.picture_paths = []
         self.setup_ui()
@@ -49,14 +48,6 @@ class VideoProcessorApp:
         )
         face_restorer_dropdown.pack(pady=5)
 
-        tk.Checkbutton(
-            self.parent,
-            text="Apply Face Mask Correction",
-            variable=self.mask_face,
-            onvalue=1,
-            offvalue=0,
-        ).pack(pady=5)
-
         self.process_button = Button(
             self.parent,
             text="Start Processing",
@@ -82,15 +73,20 @@ class VideoProcessorApp:
         self.check_ready_to_process()
 
     def select_picture(self):
-        file_paths = filedialog.askopenfilenames(  # Changed to allow multiple file selection
-            title="Now, please select pictures for face swapping"
+        file_paths = (
+            filedialog.askopenfilenames(  # Changed to allow multiple file selection
+                title="Now, please select pictures for face swapping"
+            )
         )
         self.picture_paths = list(file_paths)  # Update to store multiple paths
         if self.picture_paths:
-            selected_files = ", ".join([os.path.basename(path) for path in self.picture_paths])
-            self.picture_label.config(text=selected_files)  # Update label to show selected files
+            selected_files = ", ".join(
+                [os.path.basename(path) for path in self.picture_paths]
+            )
+            self.picture_label.config(
+                text=selected_files
+            )  # Update label to show selected files
         self.check_ready_to_process()
-
 
     def update_videos_listbox(self):
         self.videos_listbox.delete(0, "end")
@@ -111,7 +107,9 @@ class VideoProcessorApp:
     def clear_process_log(self):
         self.log_listbox.delete(0, tk.END)  # Clear all entries in the log listbox
 
-    def edit_frames(self, input_dir: str, output_dir: str, video_path: str, picture_path: str) -> None:
+    def edit_frames(
+        self, input_dir: str, output_dir: str, video_path: str, picture_path: str
+    ) -> None:
         """
 
         Parameters:
@@ -130,29 +128,30 @@ class VideoProcessorApp:
                 full_frame_path,
                 picture_path,
                 face_restorer=self.face_restorer.get(),
-                mask_face=self.mask_face.get(),
             )
 
             self.status_label.config(
-                text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)}"
+                text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)} with picture: {os.path.basename(picture_path)}"
             )
             self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
 
     def process_videos(self):
         for video_path in self.video_paths:
             for picture_path in self.picture_paths:
-                self.status_label.config(text=f"Processing video: {os.path.basename(video_path)} with picture: {os.path.basename(picture_path)}")
-                self.process_video(video_path, picture_path)  
+                self.status_label.config(
+                    text=f"Processing video: {os.path.basename(video_path)} with picture: {os.path.basename(picture_path)}"
+                )
+                self.process_video(video_path, picture_path)
 
         # After processing, automatically delete the frames and edited_frames directories
         self.delete_directory("frames")
         self.delete_directory("edited_frames")
-        
-        messagebox.showinfo("Success", "All video and picture combinations processed successfully.")
+
+        messagebox.showinfo(
+            "Success", "All video and picture combinations processed successfully."
+        )
         self.status_label.config(text="")
         self.process_button["state"] = "normal"
-
-
 
     def delete_directory(self, directory: str) -> None:
         """Delete the specified directory."""
@@ -170,7 +169,9 @@ class VideoProcessorApp:
         picture_name = os.path.splitext(os.path.basename(picture_path))[0]
 
         # Updated output video path to include the picture name for face swapping
-        output_video_path = f"content/{video_name}_{picture_name}_{self.face_restorer.get()}_face_mask{self.mask_face.get()}.mp4"
+        output_video_path = (
+            f"content/{video_name}_{picture_name}_{self.face_restorer.get()}.mp4"
+        )
 
         # Clear directories
         start_time = time.time()
@@ -213,7 +214,9 @@ class VideoProcessorApp:
 
     def split_video_into_frames(self, video_path: str, output_dir: str) -> None:
         clip = VideoFileClip(video_path)
-        total_frames = int(clip.fps * clip.duration) # Estimate the total number of frames
+        total_frames = int(
+            clip.fps * clip.duration
+        )  # Estimate the total number of frames
         for i, frame in enumerate(clip.iter_frames()):
             frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
             clip.img = frame
