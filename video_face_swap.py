@@ -56,7 +56,7 @@ class VideoProcessorApp:
             to=1,
             resolution=0.01,
             orient="horizontal",
-            label="0 = Max Effect, 1 = Min Effect",
+            label="1 = Max Effect",
         )
         self.codeformer_weight_scale.set(0.5)  # Default value
         self.codeformer_weight_scale.pack(pady=5)
@@ -141,11 +141,12 @@ class VideoProcessorApp:
                 full_frame_path,
                 picture_path,
                 face_restorer=self.face_restorer.get(),
-                self.codeformer_weight_scale.get(),
+                codeformer_weight_scale=self.codeformer_weight_scale.get(),
             )
 
             self.status_label.config(
-                text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)} with picture: {os.path.basename(picture_path)}"
+                text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)} "
+                     f"with picture: {os.path.basename(picture_path)}"
             )
             self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
 
@@ -153,7 +154,8 @@ class VideoProcessorApp:
         for video_path in self.video_paths:
             for picture_path in self.picture_paths:
                 self.status_label.config(
-                    text=f"Processing video: {os.path.basename(video_path)} with picture: {os.path.basename(picture_path)}"
+                    text=f"Processing video: {os.path.basename(video_path)} "
+                         f"with picture: {os.path.basename(picture_path)}"
                 )
                 self.process_video(video_path, picture_path)
 
@@ -184,7 +186,8 @@ class VideoProcessorApp:
 
         # Updated output video path to include the picture name for face swapping
         output_video_path = (
-            f"content/{video_name}_{picture_name}_{self.face_restorer.get()}.mp4"
+            f"content/{video_name}_{picture_name}_{self.face_restorer.get()}"
+            f"_CF_weight{self.face_restorer.get()}.mp4"
         )
 
         # Clear directories
@@ -238,7 +241,8 @@ class VideoProcessorApp:
 
             # Update the status label with frame processing status
             self.status_label.config(
-                text=f"Splitting frame {i+1} of {os.path.basename(video_path)}. (estimated number of frames: {total_frames})"
+                text=f"Splitting frame {i+1} of {os.path.basename(video_path)}. "
+                     f"(estimated number of frames: {total_frames})"
             )
             self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
 
