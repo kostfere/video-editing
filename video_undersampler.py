@@ -45,6 +45,10 @@ class UnderSamplerApp:
         self.video_list.pack(pady=10, padx=10, fill="x")
         self.video_list.configure(font=("Arial", 10), state="disabled")
 
+        # Label for displaying the name of the video being processed
+        self.current_video_label = tk.Label(self.parent, text="", font=("Arial", 10))
+        self.current_video_label.pack(pady=10)
+
         self.progress_bar = ttk.Progressbar(
             self.parent, orient="horizontal", length=300, mode="determinate"
         )
@@ -73,11 +77,14 @@ class UnderSamplerApp:
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid FPS value.")
             return
+
         self.start_processing(self.selected_videos, target_fps)
+
 
     def start_processing(self, videos, target_fps):
         total_videos = len(videos)
         self.progress_bar["maximum"] = 100
+        self.convert_button["state"] = "disabled"  # Disable the convert button to prevent multiple clicks
         thread = Thread(
             target=self.process_videos,
             args=(
@@ -90,8 +97,12 @@ class UnderSamplerApp:
         thread.start()
         self.progress_bar.after(100, lambda: self.check_thread(thread))
 
+
     def process_videos(self, videos, target_fps, progress_callback):
         for i, video_path in enumerate(videos):
+            video_name = Path(video_path).name
+            # Update the label to show the name of the current video being processed
+            self.current_video_label.configure(text=f"Processing: {video_name}")
             try:
                 clip = VideoFileClip(video_path)
                 target_fps = max(1, target_fps)
@@ -119,9 +130,12 @@ class UnderSamplerApp:
             self.on_processing_complete()
             self.progress_bar["value"] = 0
 
-    def on_processing_complete(self):
-        messagebox.showinfo("Processing Complete", "All videos have been processed.")
 
+    def on_processing_complete(self):
+        self.convert_button["state"] = "normal"  # Re-enable the convert button
+        messagebox.showinfo("Processing Complete", "All videos have been processed.")
+        self.progress_bar["value"] = 0  # Reset the progress bar
+        self.current_video_label.configure(text="")  # Clear the current video name label
 
 if __name__ == "__main__":
     root = tk.Tk()
