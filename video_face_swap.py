@@ -6,6 +6,7 @@ import threading
 from a1111_api import api_change_face
 import time
 import tkinter as tk
+import math
 
 
 class VideoProcessorApp:
@@ -211,7 +212,7 @@ class VideoProcessorApp:
             f"content/{video_name}_{picture_name}"
             f"_fps{self.desired_fps_var.get()}"
             f"_FR{self.face_restorer.get()}"
-            f"_CF_weight{self.face_restorer.get()}.mp4"
+            f"_CF_weight{self.codeformer_weight_scale.get()}.mp4"
         )
 
         # Clear directories
@@ -264,27 +265,28 @@ class VideoProcessorApp:
         # Ensure desired FPS is within the valid range and adjust if necessary
         desired_fps = max(1, min(desired_fps, actual_fps))
 
-        frame_extraction_interval = int(actual_fps / desired_fps)
+        # Calculate the interval in seconds between frames
+        frame_interval = 1 / desired_fps
+
         # Calculate the total number of frames that will be extracted
-        total_extracted_frames = int((clip.duration * actual_fps) / frame_extraction_interval) + 1
+        total_extracted_frames = int(math.ceil(clip.duration / frame_interval))
 
         extracted_frame_count = 0  # Initialize the count of extracted frames
 
-        for i, frame in enumerate(clip.iter_frames()):
-            if i % frame_extraction_interval == 0:
-                extracted_frame_count += 1  # Increment the extracted frame count
-                frame_path = os.path.join(output_dir, f"frame_{extracted_frame_count:05d}.jpg")
-                # No need to set clip.img = frame; directly save the frame using save_frame
-                clip.save_frame(frame_path, t=i / actual_fps)
+        for t in (i * frame_interval for i in range(total_extracted_frames)):
+            extracted_frame_count += 1  # Increment the extracted frame count
+            frame_path = os.path.join(
+                output_dir, f"frame_{extracted_frame_count:05d}.jpg"
+            )
+            clip.save_frame(frame_path, t=t)
 
-                # Update the status label with frame processing status
-                percentage = (extracted_frame_count / total_extracted_frames) * 100
-                self.status_label.config(
-                    text=f"Splitting frame {extracted_frame_count} of {os.path.basename(video_path)}. "
-                    f"(estimated extracted frames: {total_extracted_frames}) - {percentage:.2f}% complete"
-                )
-                self.parent.update_idletasks()
-
+            # Update the status label with frame processing status
+            percentage = (extracted_frame_count / total_extracted_frames) * 100
+            self.status_label.config(
+                text=f"Splitting frame {extracted_frame_count} of {os.path.basename(video_path)}. "
+                f"(estimated extracted frames: {total_extracted_frames}) - {percentage:.2f}% complete"
+            )
+            self.parent.update_idletasks()
 
     def create_video_from_frames(
         self,
@@ -335,7 +337,6 @@ class VideoProcessorApp:
 
         # Write the video file with the specified codecs
         clip.write_videofile(output_video_path, codec="libx264", audio_codec="aac")
-
 
 
 if __name__ == "__main__":
