@@ -6,7 +6,9 @@ import threading
 from a1111_api import api_change_face
 import time
 import tkinter as tk
-import math
+
+# import math
+from PIL import Image
 
 
 class VideoProcessorApp:
@@ -259,18 +261,16 @@ class VideoProcessorApp:
     def split_video_into_frames(
         self, video_path: str, output_dir: str, desired_fps: int
     ) -> None:
+
         clip = VideoFileClip(video_path).set_fps(desired_fps)
-        total_frames = int(
-            clip.fps * clip.duration
-        )  # Estimate the total number of frames
         for i, frame in enumerate(clip.iter_frames()):
             frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
-            clip.img = frame
-            clip.save_frame(frame_path, t=i / clip.fps)
+            image = Image.fromarray(frame)
+            image.save(frame_path)
+
             # Update the status label with frame processing status
             self.status_label.config(
-                text=f"Splitting frame {i+1} of {os.path.basename(video_path)}. "
-                f"(estimated frames: {total_frames})"
+                text=f"Splitting frame {i+1} of {os.path.basename(video_path)}."
             )
             self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
 
