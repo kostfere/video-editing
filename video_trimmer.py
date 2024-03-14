@@ -110,3 +110,9 @@ class VideoTrimmerApp:
         self.parent.after(
             0, messagebox.showinfo, "Success", "Video trimmed and saved successfully!"
         )
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = VideoTrimmerApp(root)
+    root.mainloop()

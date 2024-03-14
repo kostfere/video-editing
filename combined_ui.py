@@ -1,5 +1,4 @@
 from video_face_swap import VideoProcessorApp
-from photo_face_swap import PhotoProcessorApp
 from video_undersampler import UnderSamplerApp
 from video_trimmer import VideoTrimmerApp
 
@@ -31,10 +30,10 @@ class CombinedApp:
         # tab_control.add(tab2_frame, text="Face Swap for Photos")
         # self.photo_face_swap_app = PhotoProcessorApp(tab2_frame)
 
-        # Tab for UnderSamplerApp
-        tab3_frame = ttk.Frame(tab_control)
-        tab_control.add(tab3_frame, text="Video Undersampler")
-        self.undersampler_app = UnderSamplerApp(tab3_frame)
+        # # Tab for UnderSamplerApp
+        # tab3_frame = ttk.Frame(tab_control)
+        # tab_control.add(tab3_frame, text="Video Undersampler")
+        # self.undersampler_app = UnderSamplerApp(tab3_frame)
 
         # Tab for VideoTrimmerApp
         tab4_frame = ttk.Frame(tab_control)
