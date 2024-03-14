@@ -12,6 +12,7 @@ class VideoProcessorApp:
     def __init__(self, parent):
         self.parent = parent  # Use the parent frame from the tab
         self.face_restorer = tk.StringVar(value="None")
+        self.desired_fps_var = tk.IntVar(value=12)
         self.video_paths = []
         self.picture_paths = []
         self.setup_ui()
@@ -29,6 +30,14 @@ class VideoProcessorApp:
             self.parent, height=4, width=50, exportselection=0
         )
         self.videos_listbox.pack(pady=5)
+
+        # FPS Input
+        Label(self.parent, text="Desired FPS (1-60):", font=("Arial", 12)).pack(pady=5)
+        self.desired_fps_var = tk.IntVar(value=12)  # Default FPS value
+        self.desired_fps_spinbox = tk.Spinbox(
+            self.parent, from_=1, to=60, textvariable=self.desired_fps_var, wrap=True
+        )
+        self.desired_fps_spinbox.pack(pady=5)
 
         Button(self.parent, text="Select Pictures", command=self.select_picture).pack(
             pady=5
@@ -134,6 +143,7 @@ class VideoProcessorApp:
 
         frames = [f for f in os.listdir(input_dir) if f.endswith(".jpg")]
         total_frames = len(frames)
+        start_time = time.time()  # Start time for the entire process
         for i, frame_file in enumerate(frames, start=1):
             full_frame_path = os.path.join(input_dir, frame_file)
 
@@ -144,24 +154,36 @@ class VideoProcessorApp:
                 codeformer_weight_scale=self.codeformer_weight_scale.get(),
             )
 
+            progress = (i / total_frames) * 100
+            elapsed_time = time.time() - start_time
             self.status_label.config(
                 text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)} "
-                     f"with picture: {os.path.basename(picture_path)}"
+                f"with picture: {os.path.basename(picture_path)} - {progress:.2f}% complete"
+                f" - Elapsed time: {elapsed_time:.2f} seconds"
             )
             self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
 
     def process_videos(self):
+        start_time = time.time()
         for video_path in self.video_paths:
             for picture_path in self.picture_paths:
                 self.status_label.config(
                     text=f"Processing video: {os.path.basename(video_path)} "
-                         f"with picture: {os.path.basename(picture_path)}"
+                    f"with picture: {os.path.basename(picture_path)}"
                 )
                 self.process_video(video_path, picture_path)
 
         # After processing, automatically delete the frames and edited_frames directories
         self.delete_directory("frames")
         self.delete_directory("edited_frames")
+
+        end_time = time.time()  # End time after the function execution
+        execution_time = end_time - start_time  # Calculate the execution time
+
+        self.log_listbox.insert(
+            "end", f"Execution time for process_videos: {execution_time} seconds"
+        )
+        self.log_listbox.see("end")  # Auto-scroll to the end of the listbox
 
         messagebox.showinfo(
             "Success", "All video and picture combinations processed successfully."
@@ -186,7 +208,9 @@ class VideoProcessorApp:
 
         # Updated output video path to include the picture name for face swapping
         output_video_path = (
-            f"content/{video_name}_{picture_name}_{self.face_restorer.get()}"
+            f"content/{video_name}_{picture_name}"
+            f"_fps{self.desired_fps_var.get()}"
+            f"_FR{self.face_restorer.get()}"
             f"_CF_weight{self.face_restorer.get()}.mp4"
         )
 
@@ -198,7 +222,7 @@ class VideoProcessorApp:
 
         # Split video into frames
         start_time = time.time()
-        self.split_video_into_frames(video_path, frames_dir)
+        self.split_video_into_frames(video_path, frames_dir, self.desired_fps_var.get())
         self.display_time("Split video into frames", start_time, video_name)
 
         # Edit frames
@@ -208,7 +232,9 @@ class VideoProcessorApp:
 
         # Create video from frames
         start_time = time.time()
-        self.create_video_from_frames(edited_frames_dir, output_video_path, video_path)
+        self.create_video_from_frames(
+            edited_frames_dir, output_video_path, video_path, self.desired_fps_var.get()
+        )
         self.display_time("Create video from frames", start_time, video_name)
 
         self.display_time("Total processing time", start_time_overall, video_path)
@@ -229,26 +255,48 @@ class VideoProcessorApp:
             shutil.rmtree(directory)
         os.makedirs(directory)
 
-    def split_video_into_frames(self, video_path: str, output_dir: str) -> None:
+    def split_video_into_frames(
+        self, video_path: str, output_dir: str, desired_fps: int
+    ) -> None:
         clip = VideoFileClip(video_path)
-        total_frames = int(
-            clip.fps * clip.duration
-        )  # Estimate the total number of frames
-        for i, frame in enumerate(clip.iter_frames()):
-            frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
-            clip.img = frame
-            clip.save_frame(frame_path, t=i / clip.fps)
+        actual_fps = clip.fps
 
-            # Update the status label with frame processing status
-            self.status_label.config(
-                text=f"Splitting frame {i+1} of {os.path.basename(video_path)}. "
-                     f"(estimated number of frames: {total_frames})"
-            )
-            self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
+        # Ensure desired FPS is within the valid range and adjust if necessary
+        desired_fps = max(1, min(desired_fps, actual_fps))
+
+        frame_extraction_interval = int(actual_fps / desired_fps)
+        # Calculate the total number of frames that will be extracted
+        total_extracted_frames = int((clip.duration * actual_fps) / frame_extraction_interval) + 1
+
+        extracted_frame_count = 0  # Initialize the count of extracted frames
+
+        for i, frame in enumerate(clip.iter_frames()):
+            if i % frame_extraction_interval == 0:
+                extracted_frame_count += 1  # Increment the extracted frame count
+                frame_path = os.path.join(output_dir, f"frame_{extracted_frame_count:05d}.jpg")
+                # No need to set clip.img = frame; directly save the frame using save_frame
+                clip.save_frame(frame_path, t=i / actual_fps)
+
+                # Update the status label with frame processing status
+                percentage = (extracted_frame_count / total_extracted_frames) * 100
+                self.status_label.config(
+                    text=f"Splitting frame {extracted_frame_count} of {os.path.basename(video_path)}. "
+                    f"(estimated extracted frames: {total_extracted_frames}) - {percentage:.2f}% complete"
+                )
+                self.parent.update_idletasks()
+
 
     def create_video_from_frames(
-        self, frames_dir: str, output_video_path: str, original_video_path: str
+        self,
+        frames_dir: str,
+        output_video_path: str,
+        original_video_path: str,
+        user_selected_fps: int,
     ) -> None:
+        import os
+        from moviepy.editor import ImageSequenceClip, VideoFileClip
+
+        # Retrieve the sorted list of frame files
         frame_files = sorted(
             [
                 os.path.join(frames_dir, f)
@@ -256,19 +304,38 @@ class VideoProcessorApp:
                 if f.endswith(".jpg")
             ]
         )
-        original_clip = VideoFileClip(original_video_path)
-        fps = original_clip.fps
-        clip = ImageSequenceClip(frame_files, fps=fps)
 
-        if hasattr(original_clip, "audio") and original_clip.audio is not None:
-            original_audio = original_clip.audio
-            clip = clip.set_audio(
-                original_audio.subclip(0, min(clip.duration, original_audio.duration))
-            )
+        # Load the original clip to get its FPS and duration
+        original_clip = VideoFileClip(original_video_path)
+        original_fps = original_clip.fps
+        original_duration = original_clip.duration
+
+        # If you want to maintain the duration of the original video, calculate the new FPS
+        # based on the total number of frames and the original video's duration.
+        # This ensures that the duration of the video created from the frames matches the original duration.
+        total_frame_files = len(frame_files)
+        if total_frame_files > 0 and original_duration > 0:
+            # Calculate the new FPS to maintain the original video duration
+            new_fps = total_frame_files / original_duration
+        else:
+            # Fallback to original FPS or user-selected FPS if calculation is not feasible
+            new_fps = min(user_selected_fps, original_fps)
+
+        # Create a clip from the sequence of frames with the calculated FPS
+        clip = ImageSequenceClip(frame_files, fps=new_fps)
+
+        # Check if the original video has audio and add it to the new clip
+        if original_clip.audio is not None:
+            clip = clip.set_audio(original_clip.audio)
+
+        # Ensure the output directory exists
         output_dir = os.path.dirname(output_video_path)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
+
+        # Write the video file with the specified codecs
         clip.write_videofile(output_video_path, codec="libx264", audio_codec="aac")
+
 
 
 if __name__ == "__main__":
