@@ -14,7 +14,7 @@ from PIL import Image
 class VideoProcessorApp:
     def __init__(self, parent):
         self.parent = parent  # Use the parent frame from the tab
-        self.face_restorer = tk.StringVar(value="None")
+        self.face_restorer = tk.StringVar(value="CodeFormer")
         self.desired_fps_var = tk.IntVar(value=12)
         self.video_paths = []
         self.picture_paths = []
@@ -70,10 +70,10 @@ class VideoProcessorApp:
             to=1,
             resolution=0.01,
             orient="horizontal",
-            label="0 = far from original (max restoration), 1 = close to original (min restoration)",
+            label="1 max fidelity",
         )
 
-        self.codeformer_weight_scale.set(0.5)  # Default value
+        self.codeformer_weight_scale.set(1)  # Default value
         self.codeformer_weight_scale.pack(pady=5)
 
         self.process_button = Button(
