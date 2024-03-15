@@ -61,15 +61,18 @@ class VideoProcessorApp:
         face_restorer_dropdown.pack(pady=5)
 
         # CodeFormer weight selection
-        Label(self.parent, text="CodeFormer Weight:", font=("Arial", 10)).pack(pady=5)
+        Label(
+            self.parent, text="CodeFormer Weight (Fidelity):", font=("Arial", 10)
+        ).pack(pady=5)
         self.codeformer_weight_scale = Scale(
             self.parent,
             from_=0,
             to=1,
             resolution=0.01,
             orient="horizontal",
-            label="1 = Max Effect",
+            label="0 = far from original (max restoration), 1 = close to original (min restoration)",
         )
+
         self.codeformer_weight_scale.set(0.5)  # Default value
         self.codeformer_weight_scale.pack(pady=5)
 
