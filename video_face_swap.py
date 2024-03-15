@@ -6,6 +6,7 @@ import threading
 from a1111_api import api_change_face
 import time
 import tkinter as tk
+from time_input_dialog import TimeInputDialog
 
 # import math
 from PIL import Image
@@ -26,13 +27,21 @@ class VideoProcessorApp:
             pady=20
         )
 
-        Button(self.parent, text="Select Videos", command=self.select_videos).pack(
-            pady=5
-        )
+        self.select_videos_button = Button(self.parent, text="Select Videos", command=self.select_videos)
+        self.select_videos_button.pack(pady=5)
+        
         self.videos_listbox = Listbox(
             self.parent, height=4, width=50, exportselection=0
         )
         self.videos_listbox.pack(pady=5)
+
+        self.time_setting_button = Button(
+            self.parent,
+            text="Set Start/End Times",
+            command=self.set_times,
+            state="disabled",
+        )
+        self.time_setting_button.pack(pady=5)
 
         # FPS Input
         Label(self.parent, text="Desired FPS (1-60):", font=("Arial", 12)).pack(pady=5)
@@ -42,9 +51,9 @@ class VideoProcessorApp:
         )
         self.desired_fps_spinbox.pack(pady=5)
 
-        Button(self.parent, text="Select Pictures", command=self.select_picture).pack(
-            pady=5
-        )
+        self.select_picture_button = Button(self.parent, text="Select Pictures", command=self.select_picture)
+        self.select_picture_button.pack(pady=5)
+        
         self.picture_label = Label(self.parent, text="", font=("Arial", 10))
         self.picture_label.pack(pady=5)
 
@@ -100,6 +109,20 @@ class VideoProcessorApp:
         self.update_videos_listbox()
         self.check_ready_to_process()
 
+        # Initialize default start and end times after videos are selected
+        if self.video_paths:
+            self.initialize_default_times()
+
+    def initialize_default_times(self):
+        """Initialize default start and end times for each video."""
+        self.video_start_end_times = {}
+        for video_path in self.video_paths:
+            with VideoFileClip(video_path) as clip:
+                self.video_start_end_times[video_path] = {
+                    "start": 0,
+                    "end": clip.duration,
+                }
+
     def select_picture(self):
         file_paths = (
             filedialog.askopenfilenames(  # Changed to allow multiple file selection
@@ -121,6 +144,18 @@ class VideoProcessorApp:
         for path in self.video_paths:
             self.videos_listbox.insert("end", os.path.basename(path))
 
+        if self.video_paths:
+            self.time_setting_button["state"] = "normal"
+        else:
+            self.time_setting_button["state"] = "disabled"
+
+    def set_times(self):
+        if self.video_paths:
+            dialog = TimeInputDialog(
+                self.parent, "Set Start/End Times", self.video_paths
+            )
+            self.video_start_end_times = dialog.times  # Update times
+
     def check_ready_to_process(self):
         if self.video_paths and self.picture_paths:
             self.process_button["state"] = "normal"
@@ -128,9 +163,36 @@ class VideoProcessorApp:
             self.process_button["state"] = "disabled"
 
     def start_processing(self):
-        self.process_button["state"] = "disabled"
+        # Disable all interactive elements
+        self.disable_buttons()
         self.clear_process_log()  # Clear the process log before starting
-        threading.Thread(target=self.process_videos).start()
+        processing_thread = threading.Thread(target=self.process_videos)
+        processing_thread.start()
+        self.parent.after(100, lambda: self.check_thread(processing_thread))
+
+    def disable_buttons(self):
+        self.process_button["state"] = "disabled"
+        self.time_setting_button["state"] = "disabled"
+        self.select_videos_button["state"] = "disabled"
+        self.select_picture_button["state"] = "disabled"
+
+    def check_thread(self, thread):
+        if thread.is_alive():
+            self.parent.after(100, lambda: self.check_thread(thread))
+        else:
+            self.finalize_processing()
+
+    def finalize_processing(self):
+        # Directly call the re-enable logic on the main thread
+        self.re_enable_buttons()
+
+    def re_enable_buttons(self):
+        # Explicitly re-enable the buttons
+        self.process_button["state"] = "normal"
+        self.time_setting_button["state"] = "normal" if self.video_paths else "disabled"
+        self.select_videos_button["state"] = "normal"
+        self.select_picture_button["state"] = "normal"
+
 
     def clear_process_log(self):
         self.log_listbox.delete(0, tk.END)  # Clear all entries in the log listbox
@@ -264,18 +326,31 @@ class VideoProcessorApp:
     def split_video_into_frames(
         self, video_path: str, output_dir: str, desired_fps: int
     ) -> None:
+        # Retrieve the start and end times for the video
+        video_times = self.video_start_end_times.get(
+            video_path, {"start": 0, "end": None}
+        )
+        start_time = video_times["start"]
+        end_time = video_times["end"]
 
-        clip = VideoFileClip(video_path).set_fps(desired_fps)
-        for i, frame in enumerate(clip.iter_frames()):
-            frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
-            image = Image.fromarray(frame)
-            image.save(frame_path)
+        with VideoFileClip(video_path) as clip:
+            # Apply start and end times
+            if end_time is not None:
+                clip = clip.subclip(start_time, end_time)
+            else:  # If end time is None, start from 'start_time' to the end of the clip
+                clip = clip.subclip(start_time)
+            clip = clip.set_fps(desired_fps)
 
-            # Update the status label with frame processing status
-            self.status_label.config(
-                text=f"Splitting frame {i+1} of {os.path.basename(video_path)}."
-            )
-            self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
+            for i, frame in enumerate(clip.iter_frames()):
+                frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
+                image = Image.fromarray(frame)
+                image.save(frame_path)
+
+                # Update the status label with frame processing status
+                self.status_label.config(
+                    text=f"Splitting frame {i+1} of {os.path.basename(video_path)}."
+                )
+                self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
 
     def create_video_from_frames(
         self,
@@ -292,14 +367,28 @@ class VideoProcessorApp:
             ]
         )
         original_clip = VideoFileClip(original_video_path)
-        clip = ImageSequenceClip(
-            frame_files, fps=original_clip.set_fps(desired_fps).fps
+
+        # Assuming you've already extracted the frames based on the start/end times,
+        # we only adjust the audio here to match the video segment's duration.
+        video_times = self.video_start_end_times.get(
+            original_video_path, {"start": 0, "end": None}
         )
+        start_time = video_times["start"]
+        end_time = (
+            video_times["end"]
+            if video_times["end"] is not None
+            else original_clip.duration
+        )
+
+        clip = ImageSequenceClip(
+            frame_files,
+            fps=original_clip.subclip(start_time, end_time).set_fps(desired_fps).fps,
+        )
+
+        # Trim the audio to match the video segment
         if hasattr(original_clip, "audio") and original_clip.audio is not None:
-            original_audio = original_clip.audio
-            clip = clip.set_audio(
-                original_audio.subclip(0, min(clip.duration, original_audio.duration))
-            )
+            clip = clip.set_audio(original_clip.audio.subclip(start_time, end_time))
+
         output_dir = os.path.dirname(output_video_path)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
@@ -308,5 +397,6 @@ class VideoProcessorApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.title("Video Face Swap Processor") 
     app = VideoProcessorApp(root)
     root.mainloop()
