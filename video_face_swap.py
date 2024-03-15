@@ -44,7 +44,7 @@ class VideoProcessorApp:
         self.time_setting_button.pack(pady=5)
 
         # FPS Input
-        Label(self.parent, text="Desired FPS (1-60):", font=("Arial", 12)).pack(pady=5)
+        Label(self.parent, text="Desired FPS:", font=("Arial", 12)).pack(pady=5)
         self.desired_fps_var = tk.IntVar(value=12)  # Default FPS value
         self.desired_fps_spinbox = tk.Spinbox(
             self.parent, from_=1, to=60, textvariable=self.desired_fps_var, wrap=True
