@@ -197,24 +197,59 @@ class VideoProcessorApp:
     def clear_process_log(self):
         self.log_listbox.delete(0, tk.END)  # Clear all entries in the log listbox
 
+    # def edit_frames(
+    #     self, input_dir: str, output_dir: str, video_path: str, picture_path: str
+    # ) -> None:
+    #     """
+
+    #     Parameters:
+    #     - input_dir: Directory containing the input frames.
+    #     - output_dir: Directory where the processed frames will be saved.
+    #     """
+    #     if not os.path.exists(output_dir):
+    #         os.makedirs(output_dir)
+
+    #     frames = [f for f in os.listdir(input_dir) if f.endswith(".jpg")]
+    #     total_frames = len(frames)
+    #     start_time = time.time()  # Start time for the entire process
+    #     for i, frame_file in enumerate(frames, start=1):
+    #         full_frame_path = os.path.join(input_dir, frame_file)
+
+    #         api_change_face(
+    #             full_frame_path,
+    #             picture_path,
+    #             face_restorer=self.face_restorer.get(),
+    #             codeformer_weight_scale=self.codeformer_weight_scale.get(),
+    #         )
+
+    #         progress = (i / total_frames) * 100
+    #         elapsed_time = time.time() - start_time
+    #         self.status_label.config(
+    #             text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)} "
+    #             f"with picture: {os.path.basename(picture_path)} - {progress:.2f}% complete"
+    #             f" - Elapsed time: {elapsed_time:.2f} seconds"
+    #         )
+    #         self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
     def edit_frames(
         self, input_dir: str, output_dir: str, video_path: str, picture_path: str
     ) -> None:
         """
+        Edit frames by applying face swap and calculate average FPS of the processing.
 
         Parameters:
         - input_dir: Directory containing the input frames.
         - output_dir: Directory where the processed frames will be saved.
         """
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        os.makedirs(output_dir, exist_ok=True)  # Simplified directory creation
 
         frames = [f for f in os.listdir(input_dir) if f.endswith(".jpg")]
         total_frames = len(frames)
         start_time = time.time()  # Start time for the entire process
+
         for i, frame_file in enumerate(frames, start=1):
             full_frame_path = os.path.join(input_dir, frame_file)
 
+            # Your existing API call for processing the frame remains here
             api_change_face(
                 full_frame_path,
                 picture_path,
@@ -222,14 +257,23 @@ class VideoProcessorApp:
                 codeformer_weight_scale=self.codeformer_weight_scale.get(),
             )
 
-            progress = (i / total_frames) * 100
-            elapsed_time = time.time() - start_time
+            elapsed_time = time.time() - start_time  # Time elapsed since start
+            avg_fps = i / elapsed_time if elapsed_time > 0 else 0  # Calculate average FPS
+
+            # Updated status message with average FPS
             self.status_label.config(
                 text=f"Editing frame {i}/{total_frames} of {os.path.basename(video_path)} "
-                f"with picture: {os.path.basename(picture_path)} - {progress:.2f}% complete"
-                f" - Elapsed time: {elapsed_time:.2f} seconds"
+                f"with picture: {os.path.basename(picture_path)} - {avg_fps:.2f} FPS"
             )
             self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
+
+            # Optionally, log the progress with average FPS for detailed analysis
+            self.log_listbox.insert(
+                tk.END,
+                f"Frame {i}/{total_frames} processed. Avg. FPS: {avg_fps:.2f}."
+            )
+            self.log_listbox.yview(tk.END)
+
 
     def process_videos(self):
         start_time = time.time()
