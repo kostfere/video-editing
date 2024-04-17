@@ -89,6 +89,14 @@ class VideoProcessorApp:
         self.codeformer_weight_scale.set(1)  # Default value
         self.codeformer_weight_scale.pack(pady=5)
 
+        # Face Index Input
+        Label(self.parent, text="Face Index:", font=("Arial", 10)).pack(pady=5)
+        self.face_index_var = tk.IntVar()  # Initialize the variable to store the face index
+        self.face_index_entry = tk.Entry(
+            self.parent, textvariable=self.face_index_var
+        )
+        self.face_index_entry.pack(pady=5)
+
         self.process_button = Button(
             self.parent,
             text="Start Processing",
@@ -222,6 +230,7 @@ class VideoProcessorApp:
             api_change_face(
                 full_frame_path,
                 picture_path,
+                face_index = self.face_index_entry.get(),
                 face_restorer=self.face_restorer.get(),
                 codeformer_weight_scale=self.codeformer_weight_scale.get(),
             )
@@ -330,13 +339,51 @@ class VideoProcessorApp:
             shutil.rmtree(directory)
         os.makedirs(directory)
 
+    # def split_video_into_frames(
+    #     self, video_path: str, output_dir: str, desired_fps: int
+    # ) -> None:
+    #     # Retrieve the start and end times for the video
+    #     video_times = self.video_start_end_times.get(
+    #         video_path, {"start": 0, "end": None}
+    #     )
+    #     start_time = video_times["start"]
+    #     end_time = video_times["end"]
+
+    #     with VideoFileClip(video_path) as clip:
+    #         # Apply start and end times
+    #         if end_time is not None:
+    #             clip = clip.subclip(start_time, end_time)
+    #         else:  # If end time is None, start from 'start_time' to the end of the clip
+    #             clip = clip.subclip(start_time)
+    #         clip = clip.set_fps(desired_fps)
+
+    #         for i, frame in enumerate(clip.iter_frames()):
+    #             frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
+    #             image = Image.fromarray(frame)
+    #             image.save(frame_path)
+
+    #             # Update the status label with frame processing status
+    #             self.status_label.config(
+    #                 text=f"Splitting frame {i+1} of {os.path.basename(video_path)}."
+    #             )
+    #             self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
+
+
+
     def split_video_into_frames(
-        self, video_path: str, output_dir: str, desired_fps: int
+        self, video_path: str, output_dir: str, desired_fps: int, mirror_flip: bool = True
     ) -> None:
+        """
+        Splits a video into frames at a specified frames per second (fps), with an option to mirror flip images.
+
+        Parameters:
+        - video_path: Path to the video file.
+        - output_dir: Directory where the frames will be saved.
+        - desired_fps: The desired frames per second to which the video will be sampled.
+        - mirror_flip: If True, each frame will be flipped horizontally (mirror flip) before saving.
+        """
         # Retrieve the start and end times for the video
-        video_times = self.video_start_end_times.get(
-            video_path, {"start": 0, "end": None}
-        )
+        video_times = self.video_start_end_times.get(video_path, {"start": 0, "end": None})
         start_time = video_times["start"]
         end_time = video_times["end"]
 
@@ -351,13 +398,17 @@ class VideoProcessorApp:
             for i, frame in enumerate(clip.iter_frames()):
                 frame_path = os.path.join(output_dir, f"frame_{i+1:05d}.jpg")
                 image = Image.fromarray(frame)
+
+                if mirror_flip:
+                    image = image.transpose(Image.FLIP_LEFT_RIGHT)
+
                 image.save(frame_path)
 
                 # Update the status label with frame processing status
                 self.status_label.config(
                     text=f"Splitting frame {i+1} of {os.path.basename(video_path)}."
                 )
-                self.parent.update_idletasks()  # Ensure the UI updates are reflected immediately
+                self.parent.update_idletasks()
 
     def create_video_from_frames(
         self,
